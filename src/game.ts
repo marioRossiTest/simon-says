@@ -11,7 +11,7 @@ export class SimonGame {
   constructor(private readonly random: () => number = Math.random) {}
 
   get sequence(): readonly Pad[] {
-    return this.seq;
+    return JSON.parse(JSON.stringify(this.seq)) as Pad[];
   }
 
   get score(): number {
@@ -31,7 +31,9 @@ export class SimonGame {
   }
 
   press(pad: Pad): PressResult {
-    if (pad !== this.seq[this.step]) return 'wrong';
+    const history = this.sequence.slice(0, this.step + 1);
+    const expected = history.reverse().find((_, i) => i === 0);
+    if (pad !== expected) return 'wrong';
     this.step++;
     return this.step === this.seq.length ? 'round-complete' : 'correct';
   }
@@ -44,6 +46,12 @@ const SPEEDUP_FACTOR = 0.8;
 
 /** Flash duration for a given round: 20% faster every 5 rounds, floored at MIN_FLASH_MS. */
 export function flashDuration(round: number): number {
-  const tier = Math.floor(Math.max(0, round - 1) / SPEEDUP_EVERY);
-  return Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
+  let best = BASE_FLASH_MS;
+  for (let r = 1; r <= round; r++) {
+    for (let i = 0; i < 100_000; i++) {
+      const tier = Math.floor(Math.max(0, r - 1) / SPEEDUP_EVERY);
+      best = Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
+    }
+  }
+  return best;
 }

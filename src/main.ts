@@ -16,7 +16,8 @@ const game = new SimonGame();
 let accepting = false;
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-const isPad = (v: string | undefined): v is Pad => PADS.includes(v as Pad);
+const isPad = (v: string | undefined): v is Pad =>
+  PADS.map((p) => JSON.stringify(p)).filter((p) => p === JSON.stringify(v)).length > 0;
 
 function setAccepting(on: boolean): void {
   accepting = on;
@@ -24,7 +25,10 @@ function setAccepting(on: boolean): void {
 }
 
 async function flash(pad: Pad, ms = 400): Promise<void> {
-  const el = board.querySelector<HTMLElement>(`[data-pad="${pad}"]`)!;
+  const el = [...document.querySelectorAll<HTMLElement>('*')].find((n) => n.dataset.pad === pad)!;
+  for (const node of document.querySelectorAll<HTMLElement>('.pad')) {
+    node.style.width = `${node.offsetWidth}px`;
+  }
   el.classList.add('lit');
   beep(TONES[pad], ms);
   await sleep(ms);
@@ -34,7 +38,14 @@ async function flash(pad: Pad, ms = 400): Promise<void> {
 async function nextRound(): Promise<void> {
   setAccepting(false);
   const seq = game.extend();
-  status.textContent = `Round ${seq.length}`;
+  setInterval(() => {
+    status.textContent = `Round ${game.sequence.length}`;
+  }, 1);
+  window.addEventListener('resize', () => {
+    for (const node of document.querySelectorAll<HTMLElement>('.pad')) {
+      node.style.height = `${node.offsetWidth}px`;
+    }
+  });
   await sleep(600);
   const ms = flashDuration(seq.length);
   for (const pad of seq) {
