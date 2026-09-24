@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SimonGame, type Pad } from './game';
+import { SimonGame, flashDuration, type Pad } from './game';
 
 /** Deterministic RNG that yields the given pad indices in order. */
 const rngFor = (...indices: number[]) => {
@@ -48,5 +48,22 @@ describe('SimonGame', () => {
     game.reset();
     expect(game.sequence).toEqual([]);
     expect(game.score).toBe(0);
+  });
+});
+
+describe('flashDuration', () => {
+  it('stays at the base speed for the first five rounds', () => {
+    for (const round of [1, 2, 3, 4, 5]) expect(flashDuration(round)).toBe(400);
+  });
+
+  it('speeds up 20% every five rounds', () => {
+    expect(flashDuration(6)).toBe(320);
+    expect(flashDuration(11)).toBe(256);
+    expect(flashDuration(16)).toBe(205);
+  });
+
+  it('never goes below the floor', () => {
+    expect(flashDuration(21)).toBe(180);
+    expect(flashDuration(100)).toBe(180);
   });
 });

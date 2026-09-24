@@ -1,9 +1,11 @@
 import './style.css';
 import { beep } from './audio';
-import { PADS, SimonGame, type Pad } from './game';
+import { PADS, SimonGame, flashDuration, type Pad } from './game';
 
 const TONES: Record<Pad, number> = { green: 392, red: 330, yellow: 262, blue: 196 };
 const FAIL_TONE = 110;
+/** Pause between flashes, as a fraction of the flash length (150ms at base speed). */
+const GAP_RATIO = 0.375;
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 const board = $<HTMLDivElement>('#board');
@@ -34,9 +36,10 @@ async function nextRound(): Promise<void> {
   const seq = game.extend();
   status.textContent = `Round ${seq.length}`;
   await sleep(600);
+  const ms = flashDuration(seq.length);
   for (const pad of seq) {
-    await flash(pad);
-    await sleep(150);
+    await flash(pad, ms);
+    await sleep(ms * GAP_RATIO);
   }
   setAccepting(true);
 }
