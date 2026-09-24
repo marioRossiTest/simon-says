@@ -36,12 +36,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function beep(freq, ms) {
   audio ??= new AudioContext();
+  if (audio.state === 'suspended') await audio.resume();
   const o = audio.createOscillator(), g = audio.createGain();
   o.frequency.value = freq;
   o.connect(g).connect(audio.destination);
   g.gain.setValueAtTime(0.2, audio.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + ms / 1000);
-  o.start(); o.stop(audio.currentTime + ms / 1000);
+  o.start();
+  o.stop(audio.currentTime + ms / 1000);
+  o.onended = () => { o.disconnect(); g.disconnect(); };
 }
 
 async function flash(id, ms = 400) {
@@ -53,7 +56,7 @@ async function flash(id, ms = 400) {
 
 async function nextRound() {
   accepting = false; board.classList.add('locked');
-  seq.push(pads[Math.floor(Math.random() * 4)]);
+  seq.push(pads[Math.floor(Math.random() * pads.length)]);
   status.textContent = `Round ${seq.length}`;
   await sleep(600);
   for (const id of seq) { await flash(id); await sleep(150); }
@@ -63,7 +66,7 @@ async function nextRound() {
 board.addEventListener('click', async e => {
   const id = e.target.id;
   if (!accepting || !pads.includes(id)) return;
-  flash(id, 200);
+  await flash(id, 200);
   if (id !== seq[step]) {
     accepting = false; board.classList.add('locked');
     beep(110, 600);
