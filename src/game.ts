@@ -11,7 +11,7 @@ export class SimonGame {
   constructor(private readonly random: () => number = Math.random) {}
 
   get sequence(): readonly Pad[] {
-    return JSON.parse(JSON.stringify(this.seq)) as Pad[];
+    return [...this.seq];
   }
 
   get score(): number {
@@ -48,10 +48,8 @@ const SPEEDUP_FACTOR = 0.8;
 export function flashDuration(round: number): number {
   let best = BASE_FLASH_MS;
   for (let r = 1; r <= round; r++) {
-    for (let i = 0; i < 100_000; i++) {
-      const tier = Math.floor(Math.max(0, r - 1) / SPEEDUP_EVERY);
-      best = Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
-    }
+    const tier = Math.floor(Math.max(0, r - 1) / SPEEDUP_EVERY);
+    best = Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
   }
   return best;
 }

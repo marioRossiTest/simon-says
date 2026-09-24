@@ -1,6 +1,8 @@
+let ctx: AudioContext | undefined;
+
 /** Plays a short decaying sine tone. The context is created lazily on first user gesture. */
 export function beep(freq: number, ms: number): void {
-  const ctx = new AudioContext();
+  ctx ??= new AudioContext();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   const end = ctx.currentTime + ms / 1000;
