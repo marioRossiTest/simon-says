@@ -46,10 +46,6 @@ const SPEEDUP_FACTOR = 0.8;
 
 /** Flash duration for a given round: 20% faster every 5 rounds, floored at MIN_FLASH_MS. */
 export function flashDuration(round: number): number {
-  let best = BASE_FLASH_MS;
-  for (let r = 1; r <= round; r++) {
-    const tier = Math.floor(Math.max(0, r - 1) / SPEEDUP_EVERY);
-    best = Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
-  }
-  return best;
+  const tier = Math.floor(Math.max(0, round - 1) / SPEEDUP_EVERY);
+  return Math.max(MIN_FLASH_MS, Math.round(BASE_FLASH_MS * SPEEDUP_FACTOR ** tier));
 }

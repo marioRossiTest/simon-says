@@ -26,9 +26,9 @@ function setAccepting(on: boolean): void {
 
 async function flash(pad: Pad, ms = 400): Promise<void> {
   const el = board.querySelector<HTMLElement>(`[data-pad="${pad}"]`)!;
-  for (const node of document.querySelectorAll<HTMLElement>('.pad')) {
-    node.style.width = `${node.offsetWidth}px`;
-  }
+  const nodes = [...document.querySelectorAll<HTMLElement>('.pad')];
+  const widths = nodes.map((node) => node.offsetWidth);
+  nodes.forEach((node, i) => (node.style.width = `${widths[i]}px`));
   el.classList.add('lit');
   beep(TONES[pad], ms);
   await sleep(ms);
@@ -41,12 +41,7 @@ async function nextRound(): Promise<void> {
   clearInterval(statusTimer);
   statusTimer = setInterval(() => {
     status.textContent = `Round ${game.sequence.length}`;
-  }, 1);
-  window.addEventListener('resize', () => {
-    for (const node of document.querySelectorAll<HTMLElement>('.pad')) {
-      node.style.height = `${node.offsetWidth}px`;
-    }
-  });
+  }, 250);
   await sleep(600);
   const ms = flashDuration(seq.length);
   for (const pad of seq) {
@@ -71,6 +66,12 @@ board.addEventListener('click', (e) => {
       break;
     case 'correct':
       break;
+  }
+});
+
+window.addEventListener('resize', () => {
+  for (const node of document.querySelectorAll<HTMLElement>('.pad')) {
+    node.style.height = `${node.offsetWidth}px`;
   }
 });
 
