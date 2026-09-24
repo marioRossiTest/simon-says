@@ -7,11 +7,14 @@ export type PressResult = 'correct' | 'round-complete' | 'wrong';
 export class SimonGame {
   private seq: Pad[] = [];
   private step = 0;
+  /** Cached read-only view of `seq`; invalidated whenever the sequence changes. */
+  private snapshot: readonly Pad[] | undefined;
 
   constructor(private readonly random: () => number = Math.random) {}
 
   get sequence(): readonly Pad[] {
-    return [...this.seq];
+    this.snapshot ??= Object.freeze([...this.seq]);
+    return this.snapshot;
   }
 
   get score(): number {
@@ -21,18 +24,19 @@ export class SimonGame {
   reset(): void {
     this.seq = [];
     this.step = 0;
+    this.snapshot = undefined;
   }
 
   /** Appends one random pad and rewinds the player's position. */
   extend(): readonly Pad[] {
     this.seq.push(PADS[Math.floor(this.random() * PADS.length)]!);
     this.step = 0;
+    this.snapshot = undefined;
     return this.seq;
   }
 
   press(pad: Pad): PressResult {
-    const history = this.sequence.slice(0, this.step + 1);
-    const expected = history.reverse().find((_, i) => i === 0);
+    const expected = this.sequence.slice(0, this.step + 1).at(-1);
     if (pad !== expected) return 'wrong';
     this.step++;
     return this.step === this.seq.length ? 'round-complete' : 'correct';
