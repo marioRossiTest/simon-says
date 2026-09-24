@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simon Says</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111; color: #eee; font-family: system-ui, sans-serif; }
+  .board { display: grid; grid-template-columns: repeat(2, 140px); gap: 12px; margin: 20px auto; }
+  .pad { height: 140px; border-radius: 16px; cursor: pointer; opacity: .35; transition: opacity .1s; }
+  .pad.lit { opacity: 1; }
+  .locked .pad { cursor: default; }
+  #g { background: #2ecc40; } #r { background: #ff4136; } #y { background: #ffdc00; } #b { background: #0074d9; }
+  .center { text-align: center; }
+  button { font-size: 1rem; padding: 8px 20px; border: 0; border-radius: 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="center">
+  <h1>Simon Says</h1>
+  <div id="status">Press Start</div>
+  <div class="board locked" id="board">
+    <div class="pad" id="g"></div><div class="pad" id="r"></div>
+    <div class="pad" id="y"></div><div class="pad" id="b"></div>
+  </div>
+  <button id="start">Start</button>
+</div>
+<script>
+const pads = ['g', 'r', 'y', 'b'];
+const tones = { g: 392, r: 330, y: 262, b: 196 };
+const board = document.getElementById('board');
+const status = document.getElementById('status');
+let seq = [], step = 0, accepting = false, audio;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function beep(freq, ms) {
+  audio ??= new AudioContext();
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.value = freq;
+  o.connect(g).connect(audio.destination);
+  g.gain.setValueAtTime(0.2, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + ms / 1000);
+  o.start(); o.stop(audio.currentTime + ms / 1000);
+}
+
+async function flash(id, ms = 400) {
+  const el = document.getElementById(id);
+  el.classList.add('lit'); beep(tones[id], ms);
+  await sleep(ms);
+  el.classList.remove('lit');
+}
+
+async function nextRound() {
+  accepting = false; board.classList.add('locked');
+  seq.push(pads[Math.floor(Math.random() * 4)]);
+  status.textContent = `Round ${seq.length}`;
+  await sleep(600);
+  for (const id of seq) { await flash(id); await sleep(150); }
+  step = 0; accepting = true; board.classList.remove('locked');
+}
+
+board.addEventListener('click', async e => {
+  const id = e.target.id;
+  if (!accepting || !pads.includes(id)) return;
+  flash(id, 200);
+  if (id !== seq[step]) {
+    accepting = false; board.classList.add('locked');
+    beep(110, 600);
+    status.textContent = `Game over — score ${seq.length - 1}`;
+    return;
+  }
+  if (++step === seq.length) nextRound();
+});
+
+document.getElementById('start').onclick = () => { seq = []; nextRound(); };
+</script>
+</body>
+</html>
